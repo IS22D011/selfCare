@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эрүүл Жин - Жин Хасах Хяналтын Систем</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f4f7f5;
+            color: #1e293b;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.06);
+        }
+        .water-wave {
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container (Alert орлуулагч) -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-emerald-100 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-200">
+                    <i class="fa-solid fa-leaf text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg sm:text-xl text-slate-800 tracking-tight">Эрүүл<span class="text-emerald-600">Жин</span></h1>
+                    <p class="text-[11px] text-slate-500 hidden sm:block">Таны эрүүл амьдралын хөтөч</p>
+                </div>
+            </div>
+
+            <!-- Date Selector & Profile Button -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+                    <button onclick="changeDate(-1)" class="p-1.5 sm:px-2.5 text-slate-600 hover:text-emerald-600 hover:bg-white rounded-lg transition" title="Өмнөх өдөр">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <input type="date" id="current-date-picker" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-700 px-1 sm:px-2 focus:outline-none cursor-pointer">
+                    <button onclick="changeDate(1)" class="p-1.5 sm:px-2.5 text-slate-600 hover:text-emerald-600 hover:bg-white rounded-lg transition" title="Дараагийн өдөр">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+
+                <button onclick="openModal('profile-modal')" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl font-medium text-xs sm:text-sm transition border border-emerald-200">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span class="hidden md:inline">Зорилго & Профайл</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- 1. Top Summary Cards (Overview) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Current Weight & Progress -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Одоогийн жин</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <h2 id="stat-current-weight" class="text-3xl font-extrabold text-slate-800">78.5</h2>
+                            <span class="text-sm font-medium text-slate-500">кг</span>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i class="fa-solid fa-weight-scale text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-xs font-medium mb-1.5">
+                        <span class="text-slate-500">Зорилго: <strong id="stat-target-weight" class="text-slate-700">70.0 кг</strong></span>
+                        <span id="stat-weight-percent" class="text-emerald-600 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div id="stat-weight-bar" class="bg-gradient-to-r from-emerald-400 to-emerald-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="stat-weight-remaining" class="text-[11px] text-slate-500 mt-1.5">Зорилгод хүрэхэд 8.5 кг үлдлээ</p>
+                </div>
+            </div>
+
+            <!-- BMI Card -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Биеийн жингийн индекс (BMI)</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <h2 id="stat-bmi-value" class="text-3xl font-extrabold text-slate-800">25.6</h2>
+                            <span id="stat-bmi-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Илүүдэл жинтэй</span>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                        <i class="fa-solid fa-heart-pulse text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <span>Өндөр: <strong id="stat-height" class="text-slate-700">175 см</strong></span>
+                    <button onclick="openModal('profile-modal')" class="text-emerald-600 hover:underline font-medium">Засах</button>
+                </div>
+            </div>
+
+            <!-- Net Calories Card -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Үлдсэн илчлэг (Өнөөдөр)</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <h2 id="stat-cal-remaining" class="text-3xl font-extrabold text-emerald-600">1,800</h2>
+                            <span class="text-sm font-medium text-slate-500">ккал</span>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
+                        <i class="fa-solid fa-fire-flame-curved text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px]">
+                    <div class="bg-slate-50 rounded-lg p-1">
+                        <span class="text-slate-400 block">Зорилт</span>
+                        <strong id="stat-cal-goal" class="text-slate-700">1800</strong>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-1">
+                        <span class="text-slate-400 block">Идсэн</span>
+                        <strong id="stat-cal-food" class="text-slate-700">0</strong>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-1">
+                        <span class="text-slate-400 block">Дасгал</span>
+                        <strong id="stat-cal-exercise" class="text-emerald-600">-0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Water Intake Card -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Усны хэрэглээ</p>
+                        <div class="flex items-baseline gap-1.5 mt-1">
+                            <h2 id="stat-water-current" class="text-3xl font-extrabold text-sky-600">0.00</h2>
+                            <span class="text-sm font-medium text-slate-500">/ <span id="stat-water-goal">2.5</span> л</span>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center">
+                        <i class="fa-solid fa-droplet text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 z-10 flex items-center justify-between gap-2">
+                    <button onclick="updateWater(-250)" class="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-minus"></i> 250мл
+                    </button>
+                    <button onclick="updateWater(250)" class="flex-[2] py-1.5 px-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold transition shadow-sm shadow-sky-200 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-glass-water"></i> +1 Аяга (250мл)
+                    </button>
+                </div>
+                <!-- Subtle Water Fill Background -->
+                <div id="water-bg-fill" class="water-wave absolute bottom-0 left-0 right-0 bg-sky-500/10 pointer-events-none" style="height: 0%"></div>
+            </div>
+        </section>
+
+        <!-- 2. Weight Chart & Weight Log Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Interactive Weight Chart -->
+            <div class="glass-card rounded-2xl p-5 lg:col-span-2 flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-500"></i>
+                            Жингийн өөрчлөлтийн график
+                        </h3>
+                        <p class="text-xs text-slate-500">Таны жингийн бууралтын явц (кг)</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1.5 text-slate-600">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Бүртгэсэн жин
+                        </span>
+                        <span class="flex items-center gap-1.5 text-slate-600">
+                            <span class="w-3 h-0.5 bg-amber-500 inline-block border-t border-dashed border-amber-600"></span> Зорилтот жин
+                        </span>
+                    </div>
+                </div>
+                <div id="chart-container" class="relative w-full h-64 sm:h-72 bg-slate-50/70 rounded-xl border border-slate-100 p-2 flex items-center justify-center">
+                    <canvas id="weightCanvas" class="w-full h-full block"></canvas>
+                    <!-- Tooltip for Canvas Hover -->
+                    <div id="chart-tooltip" class="hidden absolute pointer-events-none bg-slate-800 text-white text-xs rounded-lg py-1.5 px-2.5 shadow-lg z-20 transition-opacity"></div>
+                </div>
+            </div>
+
+            <!-- Weight Entry & History -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col">
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check text-emerald-500"></i>
+                    Жин бүртгэх & Түүх
+                </h3>
+                <form id="weight-form" class="flex gap-2 mb-4">
+                    <div class="relative flex-grow">
+                        <input type="number" step="0.1" min="20" max="350" id="input-weight" required placeholder="Жин (жнь: 77.8)" class="w-full pl-3 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
+                        <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400">кг</span>
+                    </div>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-sm shadow-emerald-200 whitespace-nowrap">
+                        Хадгалах
+                    </button>
+                </form>
+
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+                    <span>Огноо</span>
+                    <span>Жин / Өөрчлөлт</span>
+                </div>
+                <div id="weight-history-list" class="flex-grow overflow-y-auto max-h-52 space-y-2 pr-1">
+                    <!-- Dynamic Weight Items -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Calorie & Meal Tracker + Exercise Tracker -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Meal & Calorie Tracker (Takes 2 columns on LG) -->
+            <div class="glass-card rounded-2xl p-5 lg:col-span-2 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-utensils text-emerald-500"></i>
+                            Хоол ба Илчлэгийн бүртгэл
+                        </h3>
+                        <p class="text-xs text-slate-500">Тухайн өдөр идсэн хоол, хүнсээ ангиллаар бүртгэнэ үү</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 block">Нийт авсан илчлэг</span>
+                        <span id="meal-total-calories" class="text-lg font-extrabold text-slate-800">0 ккал</span>
+                    </div>
+                </div>
+
+                <!-- Add Meal Form -->
+                <form id="meal-form" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-100">
+                    <div class="sm:col-span-3">
+                        <select id="meal-category" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Өглөөний цай">🌅 Өглөө</option>
+                            <option value="Өдрийн хоол">☀️ Өдөр</option>
+                            <option value="Оройн хоол">🌙 Орой</option>
+                            <option value="Зууш">🍎 Зууш</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-5">
+                        <input type="text" id="meal-name" required placeholder="Хоолны нэр (жнь: Цуйван, Салат)" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <div class="relative">
+                            <input type="number" id="meal-calories" required min="1" max="5000" placeholder="Ккал" class="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <span class="absolute right-2 top-3 text-[10px] text-slate-400">ккал</span>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button type="submit" class="w-full h-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-3 rounded-xl text-sm transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Нэмэх
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Quick Add Popular Mongolian & Healthy Foods -->
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-amber-500"></i> Түгээмэл хоолнууд (Дарж хурдан нэмэх):
+                    </p>
+                    <div id="quick-foods-container" class="flex flex-wrap gap-1.5">
+                        <!-- Quick food buttons injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Meal Categories List -->
+                <div id="meals-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <!-- Dynamic Meal Cards by Category -->
+                </div>
+            </div>
+
+            <!-- Exercise Log & Water Visual Tracker -->
+            <div class="space-y-6">
+                <!-- Exercise Log Card -->
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-person-running text-emerald-500"></i>
+                                Дасгал хөдөлгөөн
+                            </h3>
+                            <p class="text-xs text-slate-500">Шатаасан илчлэгийг тооцоолно</p>
+                        </div>
+                        <span id="exercise-total-calories" class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">-0 ккал</span>
+                    </div>
+
+                    <form id="exercise-form" class="space-y-2.5 mb-4">
+                        <input type="text" id="exercise-name" required placeholder="Дасгалын төрөл (жнь: Гүйлт, Алхалт)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="relative">
+                                <input type="number" id="exercise-duration" required min="1" max="600" placeholder="Хугацаа" class="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white">
+                                <span class="absolute right-2.5 top-2.5 text-xs text-slate-400">мин</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="exercise-calories" required min="1" max="5000" placeholder="Шатаасан" class="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white">
+                                <span class="absolute right-2.5 top-2.5 text-xs text-slate-400">ккал</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-dumbbell"></i> Дасгал бүртгэх
+                        </button>
+                    </form>
+
+                    <!-- Quick Exercise Presets -->
+                    <div class="flex flex-wrap gap-1.5 mb-4">
+                        <button type="button" onclick="quickAddExercise('Хурдан алхалт', 30, 150)" class="text-[11px] bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition">🚶 Алхалт 30м (150ккал)</button>
+                        <button type="button" onclick="quickAddExercise('Гүйлт', 30, 300)" class="text-[11px] bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition">🏃 Гүйлт 30м (300ккал)</button>
+                        <button type="button" onclick="quickAddExercise('Фитнесс / Хүчний', 45, 250)" class="text-[11px] bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200 transition">🏋️ Фитнесс 45м (250ккал)</button>
+                    </div>
+
+                    <div id="exercise-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- Exercise items -->
+                    </div>
+                </div>
+
+                <!-- Detailed Water Visual Cups Card -->
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-glass-water text-sky-500"></i>
+                            Өдрийн усны аяганууд
+                        </h3>
+                        <span id="water-percent-label" class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded-lg">0%</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">1 аяга = 250 мл. Аяган дээр дарж уусан усаа тэмдэглэнэ үү.</p>
+                    <div id="water-cups-grid" class="grid grid-cols-5 gap-2.5">
+                        <!-- Water cup icons injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <p>© 2026 <strong>ЭрүүлЖин</strong> — Таны бүх өгөгдөл таны хөтөч дээр (LocalStorage) найдвартай хадгалагдана.</p>
+            <div class="flex items-center gap-4">
+                <button onclick="resetDemoData()" class="text-slate-400 hover:text-emerald-600 transition underline">Жишээ өгөгдөл сэргээх</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Profile & Goals Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-emerald-600"></i>
+                    Хэрэглэгчийн мэдээлэл & Зорилго
+                </h3>
+                <button onclick="closeModal('profile-modal')" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="profile-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Эхэлсэн / Одоогийн жин (кг)</label>
+                        <input type="number" step="0.1" id="prof-start-weight" required min="30" max="300" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Зорилтот жин (кг)</label>
+                        <input type="number" step="0.1" id="prof-target-weight" required min="30" max="300" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Өндөр (см)</label>
+                        <input type="number" id="prof-height" required min="100" max="250" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Өдрийн усны зорилт (литр)</label>
+                        <input type="number" step="0.25" id="prof-water-goal" required min="0.5" max="10" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Өдөр тутмын илчлэгийн зорилт (ккал)</label>
+                    <input type="number" id="prof-cal-goal" required min="800" max="6000" step="50" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Зөвлөмж: Жин хасахад эмэгтэйчүүд 1400-1700 ккал, эрэгтэйчүүд 1800-2200 ккал тохиромжтой.</p>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('profile-modal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Болих</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-200 transition">Хадгалах</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- 1. STATE & DEFAULT DEMO DATA ---
+        const STORAGE_KEY = 'eruul_jin_tracker_v1';
+
+        // Тухайн өдрийн огноог YYYY-MM-DD хэлбэрээр авах
+        function getTodayStr(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        }
+
+        // Түгээмэл Монгол болон эрүүл хоолны жагсаалт
+        const QUICK_FOODS = [
+            { name: 'Бууз (3 ширхэг)', calories: 420, category: 'Өдрийн хоол' },
+            { name: 'Цуйван (1 таваг)', calories: 650, category: 'Өдрийн хоол' },
+            { name: 'Банштай цай (1 аяга)', calories: 380, category: 'Өглөөний цай' },
+            { name: 'Чанасан өндөг (2 ш)', calories: 155, category: 'Өглөөний цай' },
+            { name: 'Овъёосны каш', calories: 250, category: 'Өглөөний цай' },
+            { name: 'Тахианы цээж мах, будаа', calories: 450, category: 'Өдрийн хоол' },
+            { name: 'Ногооны салат', calories: 180, category: 'Оройн хоол' },
+            { name: 'Алим / Гадил (1 ш)', calories: 95, category: 'Зууш' },
+            { name: 'Тараг (1 аяга)', calories: 130, category: 'Зууш' },
+            { name: 'Хар кофе (чихэргүй)', calories: 5, category: 'Өглөөний цай' }
+        ];
+
+        // Анхны жишээ өгөгдөл үүсгэх функц
+        function createDefaultState() {
+            const today = getTodayStr(0);
+            return {
+                selectedDate: today,
+                profile: {
+                    startWeight: 82.0,
+                    targetWeight: 72.0,
+                    height: 174,
+                    calorieGoal: 1800,
+                    waterGoalLiters: 2.5
+                },
+                weights: [
+                    { date: getTodayStr(-14), weight: 82.0 },
+                    { date: getTodayStr(-10), weight: 81.2 },
+                    { date: getTodayStr(-7), weight: 80.5 },
+                    { date: getTodayStr(-4), weight: 79.8 },
+                    { date: getTodayStr(-1), weight: 79.1 },
+                    { date: today, weight: 78.8 }
+                ],
+                dailyLogs: {
+                    [today]: {
+                        meals: [
+                            { id: 1, category: 'Өглөөний цай', name: 'Чанасан өндөг (2 ш) ба хар талх', calories: 240 },
+                            { id: 2, category: 'Өдрийн хоол', name: 'Тахианы цээж мах, гурвалжин будаа', calories: 480 },
+                            { id: 3, category: 'Зууш', name: 'Ногоон алим', calories: 85 }
+                        ],
+                        exercises: [
+                            { id: 101, name: 'Цэцэрлэгт хүрээлэнд хурдан алхалт', duration: 35, calories: 180 }
+                        ],
+                        waterMl: 1250
+                    }
+                }
+            };
+        }
+
+        let appState = loadState();
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return createDefaultState();
+                const parsed = JSON.parse(raw);
+                if (!parsed.selectedDate) parsed.selectedDate = getTodayStr(0);
+                return parsed;
+            } catch (e) {
+                console.error('Өгөгдөл уншихад алдаа гарлаа:', e);
+                return createDefaultState();
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                showToast('Өгөгдөл хадгалахад алдаа гарлаа', 'error');
+            }
+        }
+
+        function resetDemoData() {
+            appState = createDefaultState();
+            saveState();
+            renderAll();
+            showToast('Жишээ өгөгдөл амжилттай сэргээгдлээ!', 'success');
+        }
+
+        // Тухайн сонгосон өдрийн бүртгэлийг авах эсвэл хоосон үүсгэх
+        function getCurrentDayLog() {
+            const d = appState.selectedDate;
+            if (!appState.dailyLogs[d]) {
+                appState.dailyLogs[d] = {
+                    meals: [],
+                    exercises: [],
+                    waterMl: 0
+                };
+            }
+            return appState.dailyLogs[d];
+        }
+
+        // --- 2. TOAST NOTIFICATION (Alert-ийн оронд) ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-600' : (type === 'info' ? 'bg-slate-800' : 'bg-emerald-600');
+            const icon = type === 'error' ? 'fa-circle-exclamation' : (type === 'info' ? 'fa-circle-info' : 'fa-circle-check');
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium pointer-events-auto transform transition-all duration-300 translate-y-0 opacity-100`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon}"></i>
+                <span class="flex-grow">${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- 3. MODAL CONTROLS ---
+        function openModal(id) {
+            if (id === 'profile-modal') {
+                document.getElementById('prof-start-weight').value = appState.profile.startWeight;
+                document.getElementById('prof-target-weight').value = appState.profile.targetWeight;
+                document.getElementById('prof-height').value = appState.profile.height;
+                document.getElementById('prof-cal-goal').value = appState.profile.calorieGoal;
+                document.getElementById('prof-water-goal').value = appState.profile.waterGoalLiters;
+            }
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        // --- 4. DATE NAVIGATION ---
+        const datePicker = document.getElementById('current-date-picker');
+        datePicker.addEventListener('change', (e) => {
+            if (e.target.value) {
+                appState.selectedDate = e.target.value;
+                saveState();
+                renderAll();
+            }
+        });
+
+        function changeDate(delta) {
+            const current = new Date(appState.selectedDate);
+            current.setDate(current.getDate() + delta);
+            appState.selectedDate = current.toISOString().split('T')[0];
+            saveState();
+            renderAll();
+        }
+
+        // --- 5. PROFILE & BMI CALCULATIONS ---
+        document.getElementById('profile-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appState.profile.startWeight = parseFloat(document.getElementById('prof-start-weight').value);
+            appState.profile.targetWeight = parseFloat(document.getElementById('prof-target-weight').value);
+            appState.profile.height = parseInt(document.getElementById('prof-height').value, 10);
+            appState.profile.calorieGoal = parseInt(document.getElementById('prof-cal-goal').value, 10);
+            appState.profile.waterGoalLiters = parseFloat(document.getElementById('prof-water-goal').value);
+
+            saveState();
+            closeModal('profile-modal');
+            renderAll();
+            showToast('Хувийн мэдээлэл ба зорилго шинэчлэгдлээ!');
+        });
+
+        function calculateBMI(weightKg, heightCm) {
+            const hMeters = heightCm / 100;
+            if (!hMeters || hMeters <= 0) return { value: 0, label: 'Тодорхойгүй', color: 'bg-slate-100 text-slate-600' };
+            const bmi = weightKg / (hMeters * hMeters);
+            const rounded = bmi.toFixed(1);
+
+            if (bmi < 18.5) return { value: rounded, label: 'Жингийн дутагдалтай', color: 'bg-sky-100 text-sky-700' };
+            if (bmi < 25) return { value: rounded, label: 'Хэвийн жинтэй', color: 'bg-emerald-100 text-emerald-700' };
+            if (bmi < 30) return { value: rounded, label: 'Илүүдэл жинтэй', color: 'bg-amber-100 text-amber-700' };
+            return { value: rounded, label: 'Таргалалттай', color: 'bg-rose-100 text-rose-700' };
+        }
+
+        // --- 6. WEIGHT TRACKING & INTERACTIVE CANVAS CHART ---
+        document.getElementById('weight-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById('input-weight').value);
+            if (isNaN(val) || val <= 0) return;
+
+            const date = appState.selectedDate;
+            const existingIdx = appState.weights.findIndex(w => w.date === date);
+            if (existingIdx >= 0) {
+                appState.weights[existingIdx].weight = val;
+            } else {
+                appState.weights.push({ date, weight: val });
+            }
+
+            // Огноогоор эрэмбэлэх
+            appState.weights.sort((a, b) => a.date.localeCompare(b.date));
+            document.getElementById('input-weight').value = '';
+            saveState();
+            renderAll();
+            showToast(`${date} өдрийн жин (${val} кг) хадгалагдлаа!`);
+        });
+
+        function deleteWeight(date) {
+            appState.weights = appState.weights.filter(w => w.date !== date);
+            saveState();
+            renderAll();
+            showToast('Жингийн бүртгэл устгагдлаа', 'info');
+        }
+
+        // Canvas дээр график зурах & Hover хийхэд утга харуулах
+        let chartPoints = [];
+
+        function drawWeightChart() {
+            const canvas = document.getElementById('weightCanvas');
+            const container = document.getElementById('chart-container');
+            if (!canvas || !container) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const data = [...appState.weights].sort((a, b) => a.date.localeCompare(b.date));
+            if (data.length === 0) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '13px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Жингийн бүртгэл оруулснаар график энд харагдана', w / 2, h / 2);
+                chartPoints = [];
+                return;
+            }
+
+            const padLeft = 46;
+            const padRight = 24;
+            const padTop = 24;
+            const padBottom = 34;
+            const plotW = w - padLeft - padRight;
+            const plotH = h - padTop - padBottom;
+
+            const targetW = appState.profile.targetWeight;
+            const allValues = data.map(d => d.weight).concat([targetW]);
+            let minVal = Math.min(...allValues) - 1.5;
+            let maxVal = Math.max(...allValues) + 1.5;
+            if (maxVal - minVal < 4) {
+                minVal -= 1;
+                maxVal += 1;
+            }
+
+            const getX = (index) => {
+                if (data.length === 1) return padLeft + plotW / 2;
+                return padLeft + (index / (data.length - 1)) * plotW;
+            };
+            const getY = (val) => {
+                return padTop + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
+            };
+
+            // 1. Хэвтээ туслах шугамууд ба Y тэнхлэгийн тоонууд
+            const steps = 4;
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'right';
+
+            for (let i = 0; i <= steps; i++) {
+                const val = minVal + (i / steps) * (maxVal - minVal);
+                const y = getY(val);
+                ctx.beginPath();
+                ctx.moveTo(padLeft, y);
+                ctx.lineTo(w - padRight, y);
+                ctx.stroke();
+
+                ctx.fillText(val.toFixed(1), padLeft - 8, y + 4);
+            }
+
+            // 2. Зорилтот жингийн тасархай шугам
+            const targetY = getY(targetW);
+            ctx.save();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padLeft, targetY);
+            ctx.lineTo(w - padRight, targetY);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#d97706';
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Зорилго: ${targetW} кг`, padLeft + 6, targetY - 6);
+
+            // 3. Графикийн доорх ногоон уусгалт (Gradient fill)
+            chartPoints = data.map((item, idx) => ({
+                x: getX(idx),
+                y: getY(item.weight),
+                date: item.date,
+                weight: item.weight
+            }));
+
+            if (chartPoints.length > 1) {
+                const grad = ctx.createLinearGradient(0, padTop, 0, padTop + plotH);
+                grad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+                grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+                ctx.beginPath();
+                ctx.moveTo(chartPoints[0].x, padTop + plotH);
+                chartPoints.forEach(pt => ctx.lineTo(pt.x, pt.y));
+                ctx.lineTo(chartPoints[chartPoints.length - 1].x, padTop + plotH);
+                ctx.closePath();
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+
+            // 4. Гол шугам
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            chartPoints.forEach((pt, idx) => {
+                if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            });
+            ctx.stroke();
+
+            // 5. Цэгүүд ба X тэнхлэгийн огноо
+            ctx.textAlign = 'center';
+            chartPoints.forEach((pt, idx) => {
+                // Цэг
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#059669';
+                ctx.stroke();
+
+                // Огноо харуулах (олон цэгтэй үед давхцуулахгүй)
+                const showLabel = chartPoints.length <= 7 || idx === 0 || idx === chartPoints.length - 1 || idx % Math.ceil(chartPoints.length / 6) === 0;
+                if (showLabel) {
+                    const shortDate = pt.date.slice(5); // MM-DD
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '10px Inter, sans-serif';
+                    ctx.fillText(shortDate, pt.x, h - 10);
+                }
+            });
+        }
+
+        // Canvas дээр хулгана эсвэл хуруу хүргэхэд Tooltip харуулах
+        const weightCanvasEl = document.getElementById('weightCanvas');
+        const chartTooltipEl = document.getElementById('chart-tooltip');
+
+        function handleCanvasHover(clientX, clientY) {
+            if (!chartPoints.length) return;
+            const rect = weightCanvasEl.getBoundingClientRect();
+            const mouseX = clientX - rect.left;
+            const mouseY = clientY - rect.top;
+
+            let closest = null;
+            let minDist = 28; // Мэдрэх радиус
+
+            chartPoints.forEach(pt => {
+                const dist = Math.hypot(pt.x - mouseX, pt.y - mouseY);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = pt;
+                }
+            });
+
+            if (closest) {
+                chartTooltipEl.innerHTML = `<div class="font-bold text-emerald-300">${closest.weight} кг</div><div class="text-[10px] text-slate-300">${closest.date}</div>`;
+                chartTooltipEl.style.left = `${Math.min(Math.max(closest.x - 35, 8), rect.width - 85)}px`;
+                chartTooltipEl.style.top = `${Math.max(closest.y - 48, 6)}px`;
+                chartTooltipEl.classList.remove('hidden');
+            } else {
+                chartTooltipEl.classList.add('hidden');
+            }
+        }
+
+        weightCanvasEl.addEventListener('mousemove', (e) => handleCanvasHover(e.clientX, e.clientY));
+        weightCanvasEl.addEventListener('mouseleave', () => chartTooltipEl.classList.add('hidden'));
+        weightCanvasEl.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) handleCanvasHover(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        // --- 7. MEAL & CALORIE TRACKING ---
+        document.getElementById('meal-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const category = document.getElementById('meal-category').value;
+            const name = document.getElementById('meal-name').value.trim();
+            const calories = parseInt(document.getElementById('meal-calories').value, 10);
+
+            if (!name || isNaN(calories) || calories <= 0) return;
+
+            const log = getCurrentDayLog();
+            log.meals.push({
+                id: Date.now(),
+                category,
+                name,
+                calories
+            });
+
+            document.getElementById('meal-name').value = '';
+            document.getElementById('meal-calories').value = '';
+            saveState();
+            renderAll();
+            showToast(`"${name}" (${calories} ккал) нэмэгдлээ!`);
+        });
+
+        function quickAddFood(food) {
+            const log = getCurrentDayLog();
+            log.meals.push({
+                id: Date.now() + Math.random(),
+                category: food.category,
+                name: food.name,
+                calories: food.calories
+            });
+            saveState();
+            renderAll();
+            showToast(`${food.name} (+${food.calories} ккал) бүртгэгдлээ`);
+        }
+
+        function deleteMeal(id) {
+            const log = getCurrentDayLog();
+            log.meals = log.meals.filter(m => m.id !== id);
+            saveState();
+            renderAll();
+        }
+
+        // --- 8. EXERCISE TRACKING ---
+        document.getElementById('exercise-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('exercise-name').value.trim();
+            const duration = parseInt(document.getElementById('exercise-duration').value, 10);
+            const calories = parseInt(document.getElementById('exercise-calories').value, 10);
+
+            if (!name || isNaN(duration) || isNaN(calories)) return;
+
+            const log = getCurrentDayLog();
+            log.exercises.push({
+                id: Date.now(),
+                name,
+                duration,
+                calories
+            });
+
+            document.getElementById('exercise-name').value = '';
+            document.getElementById('exercise-duration').value = '';
+            document.getElementById('exercise-calories').value = '';
+            saveState();
+            renderAll();
+            showToast(`Дасгал бүртгэгдлээ: -${calories} ккал шатаалаа!`);
+        });
+
+        function quickAddExercise(name, duration, calories) {
+            const log = getCurrentDayLog();
+            log.exercises.push({
+                id: Date.now() + Math.random(),
+                name,
+                duration,
+                calories
+            });
+            saveState();
+            renderAll();
+            showToast(`${name} (-${calories} ккал) нэмэгдлээ!`);
+        }
+
+        function deleteExercise(id) {
+            const log = getCurrentDayLog();
+            log.exercises = log.exercises.filter(ex => ex.id !== id);
+            saveState();
+            renderAll();
+        }
+
+        // --- 9. WATER TRACKING ---
+        function updateWater(deltaMl) {
+            const log = getCurrentDayLog();
+            log.waterMl = Math.max(0, (log.waterMl || 0) + deltaMl);
+            saveState();
+            renderAll();
+            if (deltaMl > 0) {
+                showToast(`+${deltaMl} мл ус нэмэгдлээ 💧`, 'info');
+            }
+        }
+
+        function setWaterCups(cupIndex) {
+            const log = getCurrentDayLog();
+            const targetMl = (cupIndex + 1) * 250;
+            // Хэрэв яг тэр аяга дээр дахин дарвал 1 аяга хасна
+            if (log.waterMl === targetMl) {
+                log.waterMl = Math.max(0, targetMl - 250);
+            } else {
+                log.waterMl = targetMl;
+            }
+            saveState();
+            renderAll();
+        }
+
+        // --- 10. RENDER UI ---
+        function renderQuickFoods() {
+            const container = document.getElementById('quick-foods-container');
+            container.innerHTML = QUICK_FOODS.map((food, idx) => `
+                <button type="button" onclick='quickAddFood(${JSON.stringify(food)})' class="text-xs bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-xs">
+                    <span>${food.name}</span>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">${food.calories}</span>
+                </button>
+            `).join('');
+        }
+
+        function renderAll() {
+            datePicker.value = appState.selectedDate;
+            const log = getCurrentDayLog();
+
+            // 1. Жин ба Зорилгын тооцоолол
+            const sortedWeights = [...appState.weights].sort((a, b) => a.date.localeCompare(b.date));
+            const latestWeight = sortedWeights.length > 0
+                ? sortedWeights[sortedWeights.length - 1].weight
+                : appState.profile.startWeight;
+
+            const startW = appState.profile.startWeight;
+            const targetW = appState.profile.targetWeight;
+
+            document.getElementById('stat-current-weight').textContent = latestWeight.toFixed(1);
+            document.getElementById('stat-target-weight').textContent = `${targetW.toFixed(1)} кг`;
+
+            // Явцын хувь тооцоолох
+            let progressPercent = 0;
+            if (startW > targetW) {
+                const totalToLose = startW - targetW;
+                const lostSoFar = startW - latestWeight;
+                progressPercent = Math.min(100, Math.max(0, Math.round((lostSoFar / totalToLose) * 100)));
+            } else if (startW < targetW) {
+                // Жин нэмэх зорилготой үед
+                const totalToGain = targetW - startW;
+                const gainedSoFar = latestWeight - startW;
+                progressPercent = Math.min(100, Math.max(0, Math.round((gainedSoFar / totalToGain) * 100)));
+            } else {
+                progressPercent = 100;
+            }
+
+            document.getElementById('stat-weight-percent').textContent = `${progressPercent}%`;
+            document.getElementById('stat-weight-bar').style.width = `${progressPercent}%`;
+
+            const diff = Math.abs(latestWeight - targetW).toFixed(1);
+            const remText = latestWeight <= targetW && startW >= targetW
+                ? 'Баяр хүргэе! Та зорилтот жиндээ хүрлээ 🎉'
+                : `Зорилгод хүрэхэд ${diff} кг үлдлээ`;
+            document.getElementById('stat-weight-remaining').textContent = remText;
+
+            // 2. BMI Тооцоолол
+            const bmi = calculateBMI(latestWeight, appState.profile.height);
+            document.getElementById('stat-bmi-value').textContent = bmi.value;
+            const badge = document.getElementById('stat-bmi-badge');
+            badge.textContent = bmi.label;
+            badge.className = `text-xs font-semibold px-2.5 py-0.5 rounded-full ${bmi.color}`;
+            document.getElementById('stat-height').textContent = `${appState.profile.height} см`;
+
+            // 3. Илчлэгийн тооцоолол
+            const foodCalories = log.meals.reduce((sum, m) => sum + m.calories, 0);
+            const exerciseCalories = log.exercises.reduce((sum, ex) => sum + ex.calories, 0);
+            const calGoal = appState.profile.calorieGoal;
+            const remainingCalories = calGoal - foodCalories + exerciseCalories;
+
+            const remCalEl = document.getElementById('stat-cal-remaining');
+            remCalEl.textContent = remainingCalories.toLocaleString();
+            remCalEl.className = remainingCalories < 0
+                ? 'text-3xl font-extrabold text-rose-600'
+                : 'text-3xl font-extrabold text-emerald-600';
+
+            document.getElementById('stat-cal-goal').textContent = calGoal;
+            document.getElementById('stat-cal-food').textContent = foodCalories;
+            document.getElementById('stat-cal-exercise').textContent = `-${exerciseCalories}`;
+            document.getElementById('meal-total-calories').textContent = `${foodCalories.toLocaleString()} ккал`;
+            document.getElementById('exercise-total-calories').textContent = `-${exerciseCalories.toLocaleString()} ккал`;
+
+            // 4. Усны тооцоолол
+            const waterLiters = (log.waterMl / 1000).toFixed(2);
+            const waterGoalL = appState.profile.waterGoalLiters;
+            const waterPct = Math.min(100, Math.round((log.waterMl / (waterGoalL * 1000)) * 100));
+
+            document.getElementById('stat-water-current').textContent = waterLiters;
+            document.getElementById('stat-water-goal').textContent = waterGoalL;
+            document.getElementById('water-bg-fill').style.height = `${waterPct}%`;
+            document.getElementById('water-percent-label').textContent = `${waterPct}%`;
+
+            // Усны аяганууд зурах (Зорилтот литрт тааруулж хамгийн багадаа 10 аяга харуулна)
+            const totalCups = Math.max(8, Math.ceil((waterGoalL * 1000) / 250));
+            const filledCups = Math.floor(log.waterMl / 250);
+            const cupsGrid = document.getElementById('water-cups-grid');
+            let cupsHtml = '';
+            for (let i = 0; i < totalCups; i++) {
+                const isFilled = i < filledCups;
+                cupsHtml += `
+                    <button type="button" onclick="setWaterCups(${i})" title="${(i + 1) * 250} мл"
+                        class="h-11 rounded-xl border flex flex-col items-center justify-center transition ${
+                            isFilled
+                                ? 'bg-sky-500 border-sky-600 text-white shadow-xs'
+                                : 'bg-slate-50 border-slate-200 text-slate-300 hover:border-sky-300 hover:text-sky-400'
+                        }">
+                        <i class="fa-solid fa-glass-water text-sm"></i>
+                        <span class="text-[9px] font-semibold mt-0.5">${(i + 1) * 250}</span>
+                    </button>
+                `;
+            }
+            cupsGrid.innerHTML = cupsHtml;
+
+            // 5. Жингийн түүх жагсаалт
+            const weightListEl = document.getElementById('weight-history-list');
+            const reversedWeights = [...sortedWeights].reverse();
+            if (reversedWeights.length === 0) {
+                weightListEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Бүртгэл одоогоор хоосон байна.</p>`;
+            } else {
+                weightListEl.innerHTML = reversedWeights.map((item, idx) => {
+                    const prevItem = reversedWeights[idx + 1];
+                    let diffHtml = '';
+                    if (prevItem) {
+                        const d = (item.weight - prevItem.weight).toFixed(1);
+                        if (d < 0) diffHtml = `<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">${d} кг</span>`;
+                        else if (d > 0) diffHtml = `<span class="text-[11px] font-semibold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md">+${d} кг</span>`;
+                        else diffHtml = `<span class="text-[11px] text-slate-400">0.0 кг</span>`;
+                    }
+                    return `
+                        <div class="flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 px-3 py-2 rounded-xl border border-slate-100 transition">
+                            <span class="text-xs font-medium text-slate-600">${item.date}</span>
+                            <div class="flex items-center gap-2">
+                                ${diffHtml}
+                                <strong class="text-sm font-bold text-slate-800">${item.weight.toFixed(1)} кг</strong>
+                                <button onclick="deleteWeight('${item.date}')" class="text-slate-300 hover:text-rose-500 transition ml-1" title="Устгах">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 6. Хоолны жагсаалт (Ангиллаар)
+            const categories = [
+                { key: 'Өглөөний цай', icon: '🌅' },
+                { key: 'Өдрийн хоол', icon: '☀️' },
+                { key: 'Оройн хоол', icon: '🌙' },
+                { key: 'Зууш', icon: '🍎' }
+            ];
+            const mealsContainer = document.getElementById('meals-list-container');
+            mealsContainer.innerHTML = categories.map(cat => {
+                const catMeals = log.meals.filter(m => m.category === cat.key);
+                const catSum = catMeals.reduce((s, m) => s + m.calories, 0);
+
+                const itemsHtml = catMeals.length === 0
+                    ? `<p class="text-[11px] text-slate-400 italic py-2">Бүртгэлгүй</p>`
+                    : catMeals.map(m => `
+                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0 text-xs">
+                            <span class="text-slate-700 font-medium truncate pr-2">${m.name}</span>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="font-semibold text-slate-600">${m.calories} ккал</span>
+                                <button onclick="deleteMeal(${m.id})" class="text-slate-300 hover:text-rose-500 transition" title="Устгах">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                return `
+                    <div class="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100">
+                        <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200/70">
+                            <span class="text-xs font-bold text-slate-700">${cat.icon} ${cat.key}</span>
+                            <span class="text-xs font-bold text-emerald-600">${catSum} ккал</span>
+                        </div>
+                        <div>${itemsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // 7. Дасгалын жагсаалт
+            const exListEl = document.getElementById('exercise-list');
+            if (log.exercises.length === 0) {
+                exListEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Өнөөдөр дасгал бүртгэгдээгүй байна.</p>`;
+            } else {
+                exListEl.innerHTML = log.exercises.map(ex => `
+                    <div class="flex items-center justify-between bg-emerald-50/40 px-3 py-2 rounded-xl border border-emerald-100 text-xs">
+                        <div>
+                            <p class="font-semibold text-slate-700">${ex.name}</p>
+                            <span class="text-[11px] text-slate-500">${ex.duration} минут</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="font-bold text-emerald-600">-${ex.calories} ккал</span>
+                            <button onclick="deleteExercise(${ex.id})" class="text-slate-300 hover:text-rose-500 transition" title="Устгах">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 8. График шинэчлэх
+            drawWeightChart();
+        }
+
+        // --- 11. INITIALIZATION & RESIZE HANDLER ---
+        window.addEventListener('resize', () => {
+            drawWeightChart();
+        });
+
+        window.onload = function () {
+            renderQuickFoods();
+            renderAll();
+        };
+    </script>
+</body>
+</html>
